@@ -5,6 +5,9 @@ import { LayoutAdmin } from '@/layout/LayoutAdmin/LayoutAdmin'
 import { CategoryPage } from '@/page/Admin/category'
 import { BrandPage } from '@/page/Admin/Brand'
 import { SubcategoryPage } from '@/page/Admin/subcategory'
+import { AddProduct } from '@/page/Admin/product/addProduct'
+import { Product } from '@/page/Admin/product/product'
+import { EditProduct } from '@/page/Admin/product/editProduct'
 export const RouterAdmin = () => {
     return (
         <Routes>
@@ -14,9 +17,9 @@ export const RouterAdmin = () => {
                     <Route path="product-manage/category" element={<CategoryPage />} />
                     <Route path="product-manage/subcategory" element={<SubcategoryPage />} />
                     <Route path="product-manage/brand" element={<BrandPage />} />
-                    <Route path="product-manage/products" element={<div>products</div>} />
-                    <Route path="product-manage/products/add" element={<div>products/add</div>} />
-                    <Route path="product-manage/products/edit/:id" element={<div>products/edit</div>} />
+                    <Route path="product-manage/products" element={<Product />} />
+                    <Route path="product-manage/products/add" element={<AddProduct />} />
+                    <Route path="product-manage/products/edit/:id" element={<EditProduct />} />
                     <Route path="order-manage/orders" element={<div>order</div>} />
                     <Route path="order-manage/cart" element={<div>cart</div>} />
                     <Route path="user-manage/users" element={<div>users</div>} />

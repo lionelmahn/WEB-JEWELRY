@@ -1,0 +1,37 @@
+import { ProductService } from "@/service/product/ProductService";
+import { create } from "zustand";
+
+export const ProductStore = create(() => ({
+    getAllProduct: async (params) => {
+        const data = await ProductService.getAllProduct(params);
+        return data;
+    },
+    getProductById: async (id) => {
+        const dataById = await ProductService.getProductById(id)
+        return dataById
+    },
+    createProduct: async (payload) => {
+        const newData = await ProductService.createProduct(payload)
+        return newData
+    },
+    updateProduct: async (id, payload) => {
+        const editData = await ProductService.updateProduct(id, payload)
+        return editData;
+    },
+    deleteProduct: async (id) => {
+        const deleteProduct = await ProductService.deleteProduct(id);
+        return deleteProduct
+    },
+    uploadImgProduct: async (payload) => {
+        const upImg = await ProductService.uploadImg(payload)
+        return upImg
+    },
+    deleteImgProduct: async (id, payload) => {
+        const removeImg = await ProductService.deleteImgProduct(id, payload)
+        return removeImg
+    },
+    deleteImgProTem: async (url) => {
+        const deleteImgTem = await ProductService.deleteImgTem(url);
+        return deleteImgTem
+    }
+}))

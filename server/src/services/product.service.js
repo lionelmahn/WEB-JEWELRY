@@ -73,7 +73,7 @@ class ProductService {
         return data;
     }
     async createProduct(data) {
-        const { name, brandId, categoryId, subCategoryId, discount, variants, images, description, isFeatured, isNewProduct } = data;
+        const { name, brandId, categoryId, subCategoryId, promotion, variants, images, description, isFeatured, isNewProduct } = data;
 
         if (!name || !brandId || !categoryId || !subCategoryId)
             throw new BadRequest("Thiếu thông tin");
@@ -106,7 +106,7 @@ class ProductService {
                 sku: `${toSlug(name).toUpperCase().slice(0, 3)}-${item.color ? item.color.toUpperCase().slice(0, 2) : "NO"
                     }-${String(op.value).replace('.', '')}-${nanoid(6).toUpperCase()}`,
                 originalPrice: calcPrice(op),
-                finalPrice: calcPrice(op, discount)
+                finalPrice: calcPrice(op, promotion.isActive ? promotion.discount : 0)
             }))
         }));
         const newProduct = await productModel.create({
@@ -115,7 +115,7 @@ class ProductService {
             brandId,
             categoryId,
             subCategoryId,
-            discount: discount || 0,
+            promotion,
             variants: generateSku,
             images,
             description,
@@ -128,7 +128,7 @@ class ProductService {
     }
 
     async updateProduct(id, data) {
-        const { name, brandId, categoryId, subCategoryId, discount, variants, images, description, isFeatured, isNewProduct } = data;
+        const { name, brandId, categoryId, subCategoryId, promotion, variants, images, description, isFeatured, isNewProduct } = data;
 
         const product = await productModel.findById(id);
         if (!product) throw new NotFound("Không tìm thấy sản phẩm");
@@ -156,7 +156,7 @@ class ProductService {
                 sku: `${toSlug(name).toUpperCase().slice(0, 3)}-${item.color ? item.color.toUpperCase().slice(0, 2) : "NO"
                     }-${String(op.value).replace('.', '')}-${nanoid(6).toUpperCase()}`,
                 originalPrice: calcPrice(op),
-                finalPrice: calcPrice(op, discount)
+                finalPrice: calcPrice(op, promotion.isActive ? promotion.discount : 0)
             }))
         }));
         const mergedImg = [...images, ...product.images].filter(
@@ -172,7 +172,7 @@ class ProductService {
                 brandId,
                 categoryId,
                 subCategoryId,
-                discount: discount ?? product.discount,
+                promotion,
                 variants: generateSku,
                 images: mergedImg,
                 description,
@@ -190,7 +190,7 @@ class ProductService {
     }
     async uploadImgProduct(files) {
         if (!files || files.length === 0) {
-            throw new BadRequest("Vui lòng chọn ảnh đại diện");
+            throw new BadRequest("Vui lòng chọn ảnh");
         }
         const up = files.map(async (item) => {
             const result = await cloudinary.uploader.upload(item.path, {

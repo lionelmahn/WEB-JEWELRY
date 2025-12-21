@@ -59,7 +59,7 @@ class SubcategoryService {
     }
     async createImgSub(files) {
         if (!files || files.length === 0) {
-            throw new BadRequest("Vui lòng chọn ảnh đại diện");
+            throw new BadRequest("Vui lòng chọn ảnh");
         }
         const up = files.map(async (item) => {
             const result = await cloudinary.uploader.upload(item.path, {

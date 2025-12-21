@@ -60,3 +60,4 @@ const mergedImg = [...images, ...product].filter(
     (v, i, arr) => arr.findIndex(t => t.url === v.url) === i
 );
 console.log(">>> mergedImg", mergedImg)
+console.log(typeof (1 * 9))

@@ -37,8 +37,8 @@ class ProductController extends BaseController {
     }
     createProduct = async (req, res) => {
         try {
-            const { name, brandId, categoryId, subCategoryId, discount, variants, images, description, isFeatured, isNewProduct } = req.body;
-            const newProduct = await productService.createProduct({ name, brandId, categoryId, subCategoryId, discount, variants, images, description, isFeatured, isNewProduct })
+            const { name, brandId, categoryId, subCategoryId, promotion, variants, images, description, isFeatured, isNewProduct } = req.body;
+            const newProduct = await productService.createProduct({ name, brandId, categoryId, subCategoryId, promotion, variants, images, description, isFeatured, isNewProduct })
             return this.created(res, newProduct, "Thêm sản phẩm thành công");
         } catch (error) {
             return this.handleErr(res, error);
@@ -47,8 +47,8 @@ class ProductController extends BaseController {
     updateProduct = async (req, res) => {
         try {
             const { id } = req.params;
-            const { name, brandId, categoryId, subCategoryId, discount, variants, images, description, isFeatured, isNewProduct } = req.body;
-            const updatedProduct = await productService.updateProduct(id, { name, brandId, categoryId, subCategoryId, discount, variants, images, description, isFeatured, isNewProduct })
+            const { name, brandId, categoryId, subCategoryId, promotion, variants, images, description, isFeatured, isNewProduct } = req.body;
+            const updatedProduct = await productService.updateProduct(id, { name, brandId, categoryId, subCategoryId, promotion, variants, images, description, isFeatured, isNewProduct })
             return this.ok(res, updatedProduct, "Cập nhật thành công");
         } catch (error) {
             return this.handleErr(res, error);

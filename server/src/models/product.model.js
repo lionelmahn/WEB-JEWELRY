@@ -7,9 +7,12 @@ const ProductSchema = new Schema(
         brandId: { type: mongoose.Schema.Types.ObjectId, ref: "brand", required: true },
         categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "category", required: true },
         subCategoryId: { type: mongoose.Schema.Types.ObjectId, ref: "subcategory", required: true },
-        discount: { type: Number, default: 0 },
-        saleStart: { type: Date, default: null },
-        saleEnds: { type: Date, default: null },
+        promotion: {
+            discount: { type: Number, min: 0, max: 100, default: 0 },
+            startAt: { type: Date, default: null },
+            endAt: { type: Date, default: null },
+            isActive: { type: Boolean, default: false }
+        },
         variants: [
             {
                 color: { type: String, required: false },
