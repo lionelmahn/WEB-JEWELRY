@@ -1,29 +1,30 @@
 import React, { useEffect, useState } from 'react'
 import person from "../../assets/IMG-221.png"
 import { commonStore } from '@/store/commonStore/commonStore'
+import { useInView } from '@/lib/useInView'
 
 export const OurStory = () => {
     const { value } = commonStore()
     const [count, setCount] = useState(0)
     const [count1, setCount1] = useState(0)
     const [count2, setCount2] = useState(0)
+    const { inView, ref } = useInView()
     useEffect(() => {
-        if (value) {
+        if (inView) {
             const timer = setInterval(() => {
                 setCount(prev => prev + 1 < 30 ? prev + 1 : 30)
                 setCount1(prev => prev + 1 < 50 ? prev + 1 : 50)
-                setCount2(prev => prev + 1 < 1000 ? prev + 1 : 1000)
+                setCount2(prev => prev + 1 < 100 ? prev + 1 : 100)
             }, 50)
             return () => clearInterval(timer)
         } else {
-            setCount(30)
-            setCount1(50)
-            setCount2(1000)
+            setCount(0)
+            setCount1(0)
+            setCount2(0)
         }
-    }, [value])
-    // console.log(count, "ppppppppp")
+    }, [inView])
     return (
-        <div className='px-7.5'>
+        <div className='px-7.5' ref={ref}>
             <div className='grid grid-cols-2 gap-16'>
                 <div className='w-full h-117 rounded-2xl overflow-hidden'>
                     <img src={person} alt="" className='w-full h-117 object-cover' />

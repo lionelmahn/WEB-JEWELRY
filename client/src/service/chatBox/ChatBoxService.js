@@ -4,7 +4,7 @@ import axiosClient from "../axiosClient"
 export const ChatBoxService = {
     getAllMessage: async (params) => {
         try {
-            const res = await axiosClient.get(API_GET_CHAT_BOX, { data: { params } })
+            const res = await axiosClient.get(API_GET_CHAT_BOX, { params })
             if (res.status === 200) {
                 return res
             }

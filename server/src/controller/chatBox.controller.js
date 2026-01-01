@@ -9,6 +9,7 @@ class chatBoxController extends BaseController {
             const limit = Number(req.query?.limit) || 10
             const userId = req.user.id
             const cursor = req.query.cursor
+            console.log('BE cursor nhận được:', cursor)
             const data = await aiService.getAllMessage(limit, userId, cursor)
             return this.ok(res, data, "Thành công")
         } catch (error) {

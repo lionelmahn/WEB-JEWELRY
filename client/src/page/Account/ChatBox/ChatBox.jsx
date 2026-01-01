@@ -1,63 +1,98 @@
 import { useGetListChatBot } from '@/hooks/ChatBot/useGetListChatBot'
 import { ChatBoxStore } from '@/store/chatBoxStore/ChatBoxStore'
 import { commonStore } from '@/store/commonStore/commonStore'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { SendHorizontal, X } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link } from 'react-router'
 
 export const ChatBox = () => {
     const { setShowBot } = commonStore()
+    const scrollRef = useRef(null)
+    const loadingMoreRef = useRef(false)
     const [historyMessages, setHistoryMessages] = useState([])
     const [liveMessages, setLiveMessages] = useState([])
     const [cursor, setCursor] = useState(null)
     const [hasMore, setHasMore] = useState(false)
-    const [loading, setLoading] = useState(false)
+    const [sending, setSending] = useState(false)
+    const [loadingOld, setLoadingOld] = useState(false)
     const { register, handleSubmit, reset } = useForm()
     const { sendMessage } = ChatBoxStore()
-    const { messagesInfo, isLoading, refreshMessage } = useGetListChatBot({
+    const [fetchCursor, setFetchCursor] = useState(null)
+    const { messagesInfo, isLoading } = useGetListChatBot({
         limit: 10,
-        cursor,
+        cursor: fetchCursor,
     })
     const onSubmit = async ({ message }) => {
         if (!message) return
-        setLoading(true)
+        setSending(true)
         setLiveMessages((prev) => [
             ...prev,
             { role: 'user', message, products: [] },
         ])
-        await sendMessage(message)
+        const data = await sendMessage(message)
+        console.log(data)
+        setLiveMessages((prev) => [
+            ...prev,
+            {
+                role: 'assistant', message: data?.data?.answer
+                , products: data?.data?.products
+            },
+        ])
         reset()
-        setCursor(null)
-        setLiveMessages([])
-        await refreshMessage()
-        setLoading(false)
+        setSending(false)
+    }
+    console.log(liveMessages, "liveMessagesliveMessages")
+    const mergeAndSortMessages = (prev, next) => {
+        const map = new Map()
+            ;[...prev, ...next].forEach((m) => {
+                map.set(m._id, m)
+            })
+        return Array.from(map.values()).sort(
+            (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+        )
     }
     useEffect(() => {
         if (!messagesInfo?.data?.data) return
-
+        loadingMoreRef.current = false
+        setLoadingOld(false)
         const { messages, nextCursor, hasMore } = messagesInfo.data.data
         console.log(messagesInfo.data.data, "messagesInfo.data.datamessagesInfo.data.data")
         console.log(cursor, "cursorcursor")
+        setLiveMessages([])
         setHistoryMessages((prev) => {
-            if (!cursor) return messages
-            return [...messages]
+            if (!fetchCursor) return messages
+            return mergeAndSortMessages(prev, messages)
         })
         setCursor(nextCursor)
         setHasMore(hasMore)
     }, [messagesInfo])
     const handleScroll = (e) => {
-        const { scrollTop, scrollHeight, clientHeight } = e.target
-        if (scrollHeight <= clientHeight) return
+        const { scrollTop } = e.target
 
-        if (scrollTop === 0 && hasMore && !isLoading) {
-            refreshMessage()
+        if (
+            scrollTop === 0 &&
+            hasMore &&
+            !isLoading &&
+            !loadingMoreRef.current
+        ) {
+            loadingMoreRef.current = true
+            setLoadingOld(true)
+            setFetchCursor(cursor)
         }
     }
     const messages = [...historyMessages, ...liveMessages]
     console.log(historyMessages, "historyMessages")
     console.log(liveMessages, "liveMessages")
     console.log(messages, "messagesmessages")
+    useEffect(() => {
+        const el = scrollRef.current
+        console.log(el, "ggjijghj")
+        if (!el) return
+        el.scrollTop = el.scrollHeight
+        console.log(el.scrollHeight, "ppppppp")
+    }, [])
     return (
         <div className="fixed bottom-20 right-6 z-50">
             <div className="w-80 h-105 bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
@@ -71,7 +106,13 @@ export const ChatBox = () => {
                 <div
                     className="flex-1 px-4 py-3 space-y-3 overflow-y-auto bg-gray-50"
                     onScroll={handleScroll}
+                    ref={scrollRef}
                 >
+                    {loadingOld && (
+                        <div className="flex justify-center py-2">
+                            <div className="loader" style={{ width: "30px" }}></div>
+                        </div>
+                    )}
                     {messages.map((msg, index) => (
                         <div key={index}>
                             {msg.role === 'assistant' ? (
@@ -116,7 +157,7 @@ export const ChatBox = () => {
                             )}
                         </div>
                     ))}
-                    {loading && (
+                    {sending && (
                         <div className="text-sm text-gray-400 italic">
                             Bot đang trả lời...
                         </div>
