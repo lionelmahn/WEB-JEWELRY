@@ -11,6 +11,7 @@ import subcategoryRoute from "./routes/subcategory.route.js"
 import brandRoute from "./routes/brand.route.js"
 import reviewRoute from "./routes/review.route.js"
 import productRoute from "./routes/product.route.js"
+import cartRoute from "./routes/cart.route.js"
 import helmet from "helmet";
 import chatBoxRoute from "./routes/chatBox.route.js"
 import { authApiLimiter, globalLimiter } from "./libs/rateLimit.js";
@@ -39,6 +40,7 @@ app.use("/api/brand", authApiLimiter, authUser, brandRoute)
 app.use("/api/review", authApiLimiter, authUser, reviewRoute)
 app.use("/api/product", authUser, productRoute)
 app.use('/api/chat-box', authUser, chatBoxRoute)
+app.use('/api/cart', authUser, cartRoute)
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
