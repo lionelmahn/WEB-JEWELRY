@@ -184,7 +184,9 @@ class ProductService {
         if (!Array.isArray(images) || images.length === 0) {
             throw new BadRequest("Phải có ít nhất 1 ảnh");
         }
-
+        if (!images.some(img => img.isMain)) {
+            images[0].isMain = true;
+        }
         const generateSku = variants.map((item) => ({
             color: item.color,
             options: item.options.map((op) => ({
