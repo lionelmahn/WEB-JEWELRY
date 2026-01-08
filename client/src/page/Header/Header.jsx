@@ -1,9 +1,20 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Handbag, Heart, User } from "lucide-react"
 import { UserAuthStore } from '@/store/userAuthStore'
 import { Link } from 'react-router'
+import { CartStore } from '@/store/cartStore/CartStore'
+import { useGetListCart } from '@/hooks/Cart/useGetListCart'
 export const Header = () => {
     const { logout } = UserAuthStore()
+    const { cart, setCartFromServer } = CartStore()
+    const { carts, refreshCart } = useGetListCart({
+        page: 1,
+        limit: 10
+    })
+    console.log(carts, "cartscartscarts")
+    useEffect(() => {
+        setCartFromServer(carts?.data?.data?.totalItems)
+    }, [carts])
     const [openMenu, setOpenMenu] = useState(false)
     const user = localStorage.getItem("user");
     const dataUser = user ? JSON.parse(user) : null
@@ -11,6 +22,7 @@ export const Header = () => {
     const handleLogout = async () => {
         await logout()
     }
+    console.log(cart, "cartcartcartcart")
     return (
         <div className='container'>
             <div className='flex items-center justify-between'>
@@ -94,8 +106,13 @@ export const Header = () => {
                             )}
                         </ul>
                     </li>
-                    <li className='size-10 bg-[#CFB795] rounded-full flex items-center justify-center text-white'>
-                        <Handbag size={17} />
+                    <li className='size-10 bg-[#CFB795] rounded-full flex items-center justify-center text-white relative'>
+                        <Link to="cart">
+                            <Handbag size={17} />
+                            <div className={`absolute ${cart.length > 0 ? "bg-secondary" : ''} w-6.25 h-6.25 rounded-full flex items-center justify-center font-semibold -top-2 -right-2`}>
+                                {cart.length > 0 ? cart.length : ''}
+                            </div>
+                        </Link>
                     </li>
                 </ul>
 
