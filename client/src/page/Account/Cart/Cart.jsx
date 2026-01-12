@@ -1,14 +1,14 @@
 import { useGetListCart } from '@/hooks/Cart/useGetListCart'
 import { formatBigNumber } from '@/lib/format-big-number'
 import { CartStore } from '@/store/cartStore/CartStore'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import no_cart from "../../../assets/8a585d5429182bff2cea56bc9a9b8be0.jpg"
 import { Trash2 } from 'lucide-react'
 export const Cart = () => {
     const { carts, refreshCart, isLoading } = useGetListCart({
         page: 1, limit: 3
     })
-    const { updateCart, deleteCart } = CartStore()
+    const { updateCart, deleteCart, cart, setCartFromServer } = CartStore()
     const handleUpdateQty = async (item, type) => {
         const newQty =
             type === "inc" ? item.quantity + 1 : item.quantity - 1
@@ -21,7 +21,9 @@ export const Cart = () => {
         await deleteCart(sku);
         await refreshCart()
     }
-    console.log(carts, "cartscarts")
+    useEffect(() => {
+        setCartFromServer(carts?.data?.data?.totalItems)
+    }, [carts])
     return (
         <div className='my-40 relative min-h-screen'>
             {carts?.data?.data?.data?.length > 0 ? <h2 className='text-center mb-6 font-bold text-[28px] text-primary'>Giỏ hàng của bạn</h2> : ""}

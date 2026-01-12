@@ -1,4 +1,4 @@
-import { API_CREATE_CART, API_DELETE_CART, API_GET_CART, API_UPDATE_CART } from "@/api/api"
+import { API_CLEAR_CART, API_CREATE_CART, API_DELETE_CART, API_GET_CART, API_UPDATE_CART } from "@/api/api"
 import axiosClient from "../axiosClient"
 
 export const CartService = {
@@ -35,6 +35,16 @@ export const CartService = {
     deleteCart: async (sku) => {
         try {
             const res = await axiosClient.delete(`${API_DELETE_CART}/${sku}`)
+            if (res.status === 200) {
+                return res;
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    },
+    clearCart: async () => {
+        try {
+            const res = await axiosClient.delete(API_CLEAR_CART);
             if (res.status === 200) {
                 return res;
             }
