@@ -18,8 +18,8 @@ export const createProductShema = z.object({
                 .gt(0)
                 .lt(100)
                 .optional(),
-            startAt: z.coerce.date().optional(),
-            endAt: z.coerce.date().optional(),
+            startAt: z.coerce.date().nullable().optional(),
+            endAt: z.coerce.date().nullable().optional(),
         })
         .optional()
         .superRefine((data, ctx) => {
@@ -55,6 +55,19 @@ export const createProductShema = z.object({
                     message: "Ngày kết thúc phải sau ngày bắt đầu",
                 });
             }
+        }).transform((data) => {
+            if (!data) {
+                return data;
+            }
+            if (!data.isActive) {
+                return {
+                    ...data,
+                    discount: 0,
+                    startAt: null,
+                    endAt: null
+                }
+            }
+            return data
         }),
     variants: z.array(
         z.object({

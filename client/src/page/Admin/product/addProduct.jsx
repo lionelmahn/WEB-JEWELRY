@@ -21,8 +21,8 @@ const ProductSchema = z.object({
         .object({
             isActive: z.boolean(),
             discount: z.coerce.number().optional(),
-            startAt: z.coerce.date().optional(),
-            endAt: z.coerce.date().optional(),
+            startAt: z.coerce.date().nullable().optional(),
+            endAt: z.coerce.date().nullable().optional(),
         })
         .optional()
         .superRefine((data, ctx) => {
@@ -64,6 +64,17 @@ const ProductSchema = z.object({
                     message: "Ngày kết thúc phải sau ngày bắt đầu",
                 });
             }
+        }).transform((data) => {
+            if (!data) return data;
+            if (!data.isActive) {
+                return {
+                    ...data,
+                    discount: 0,
+                    startAt: null,
+                    endAt: null,
+                };
+            }
+            return data;
         }),
     variants: z.array(
         z.object({
@@ -76,7 +87,7 @@ const ProductSchema = z.object({
                     type: z.enum(["CARAT", "GRAM", "NONE"]),
                     value: z.coerce.number().nullable().optional(),
                     purity: z.string().nullable().optional(),
-                    stockQuantity: z.coerce.number(),
+                    stockQuantity: z.coerce.number().min(0, "Số lượng phải ≥ 0"),
                 }).refine(
                     (data) => {
                         if (data.type === "NONE") {

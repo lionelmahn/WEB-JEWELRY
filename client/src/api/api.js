@@ -66,3 +66,6 @@ export const API_GET_COUPON = "/api/coupon"
 export const API_CREATE_COUPON = "/api/coupon"
 export const API_UPDATE_COUPON = "/api/coupon"
 export const API_DELETE_COUPON = "/api/coupon"
+
+export const API_PROVINCES = "https://production.cas.so/address-kit/2025-07-01/provinces"
+export const API_COMMUNES = "https://production.cas.so/address-kit/2025-07-01/provinces/{province_code}/communes"

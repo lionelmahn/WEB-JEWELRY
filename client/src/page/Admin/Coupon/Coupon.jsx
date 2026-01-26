@@ -4,16 +4,17 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import dayjs from 'dayjs';
 import { CirclePlus, Download, RefreshCw, SquarePen, Trash, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react'
-import { useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useSearchParams } from 'react-router';
 import z from 'zod';
 import { BoxProduct } from '../BoxProduct/BoxProduct';
 import { formatBigNumber } from '@/lib/format-big-number';
+import { CurrencyInput } from '@/lib/CurrencyInput';
 const CouponSchema = z.object({
     code: z.string().min(1),
     discountType: z.enum(["percent", "fixed"]),
     discountValue: z.coerce.number().positive(),
-    minOrderValue: z.coerce.number().min(0),
+    minOrderValue: z.coerce.number().min(0, "Thiếu giá"),
     startDate: z.coerce.date().optional(),
     endDate: z.coerce.date().optional(),
     isActive: z.boolean()
@@ -237,11 +238,28 @@ export const Coupon = () => {
                     </div>
                     <div>
                         <label className="text-sm font-medium">Đơn hàng tối thiểu</label>
-                        <input
+                        <Controller
+                            name="minOrderValue"
+                            {...register("minOrderValue")}
+                            control={control}
+                            render={({ field }) => (
+                                <CurrencyInput
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    placeholder="Nhập giá đơn hàng tối thiếu"
+                                />
+                            )}
+                        />
+                        {/* <input
                             type="number"
                             {...register("minOrderValue")}
                             className="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary outline-none"
-                        />
+                        /> */}
+                        {errors.minOrderValue && (
+                            <p className="text-red-500 text-sm mt-1">
+                                {errors.minOrderValue.message}
+                            </p>
+                        )}
                     </div>
                     <label className="flex items-center gap-2">
                         <input type="checkbox" {...register("isActive")} />
