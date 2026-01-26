@@ -94,6 +94,7 @@ export const ChatBox = () => {
         el.scrollTop = el.scrollHeight
         console.log(el.scrollHeight, "ppppppp")
     }, [])
+    console.log(messages, "messagesmessagesmessagesmessagesmessages")
     return (
         <div className="fixed bottom-20 right-6 z-50">
             <div className="w-80 h-105 bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
@@ -118,13 +119,13 @@ export const ChatBox = () => {
                         <div key={index}>
                             {msg.role === 'assistant' ? (
                                 <div className="flex items-start">
-                                    <div className="bg-secondary text-white text-sm px-3 py-2 rounded-2xl rounded-tl-none max-w-[80%]">
+                                    <div className="bg-secondary text-white text-sm px-3 py-2 rounded-2xl rounded-tl-none max-w-[80%] whitespace-pre-line">
                                         {msg.message}
                                     </div>
                                 </div>
                             ) : (
                                 <div className="flex justify-end">
-                                    <div className="bg-gray-200 text-sm px-3 py-2 rounded-2xl rounded-tr-none max-w-[80%]">
+                                    <div className="bg-gray-200 text-sm px-3 py-2 rounded-2xl rounded-tr-none max-w-[80%] whitespace-pre-line">
                                         {msg.message}
                                     </div>
                                 </div>
@@ -144,11 +145,6 @@ export const ChatBox = () => {
                                             <div className="mt-1 text-sm font-medium line-clamp-2 text-[14px]">
                                                 {p.name}
                                             </div>
-                                            {p.promotion?.isActive && (
-                                                <div className="text-xs text-red-500">
-                                                    Giảm {p.promotion.discount}%
-                                                </div>
-                                            )}
                                             <div className='bg-primary flex items-center justify-center text-white mt-2 rounded-2xl text-[14px]'>
                                                 <Link to={`/product/detail/${p._id}`}>Xem chi tiết</Link>
                                             </div>

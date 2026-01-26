@@ -1,6 +1,11 @@
 import { parseIntent } from "../AI/parseIntent.js";
 import aiModel from "../models/ai.model.js";
+import categoryModel from "../models/category.model.js";
+import couponModel from "../models/coupon.model.js";
+import gemstoneModel from "../models/gemstone.model.js";
+import materialModel from "../models/material.model.js";
 import productModel from "../models/product.model.js";
+import subcategoryModel from "../models/subcategory.model.js";
 import aiService from "../services/ai.service.js";
 import BaseController from "./base.controller.js";
 class chatBoxController extends BaseController {
@@ -51,9 +56,119 @@ class chatBoxController extends BaseController {
 
                 case "ASK_PAYMENT":
                     response = {
-                        answer: "Shop hỗ trợ COD, MoMo và chuyển khoản",
+                        answer: "Shop hỗ trợ chuyển khoản và thanh toán khi nhận hàng",
                     };
                     break;
+                case "ASK_MATERIAL_PRICE": {
+                    const { category, material } = intentData.entities;
+                    let answer = "";
+
+                    const text = `${category ?? ""} ${material ?? ""}`.toLowerCase();
+
+                    const askMetal = /vàng|bạc|kim loại/.test(text);
+                    const askGem = /kim cương|đá|ngọc|ruby/.test(text);
+                    if (!text.trim()) {
+                        const metals = await materialModel.find({ active: true });
+                        const gems = await gemstoneModel.find({ active: true });
+
+                        if (metals.length) {
+                            answer += "Giá kim loại hiện tại:\n";
+                            answer += metals.map(m => {
+                                const purity = m.purity ? ` (${m.purity})` : "";
+                                return `${m.name}${purity}: ${m.pricePerUnit.toLocaleString()} đ / ${m.unit.toLowerCase()}`;
+                            }).join("\n");
+                            answer += "\n\n";
+                        }
+
+                        if (gems.length) {
+                            answer += "Giá đá quý hiện tại:\n";
+                            answer += gems.map(g =>
+                                `• ${g.name}: ${g.pricePerUnit.toLocaleString()} đ / ${g.unit.toLowerCase()}`
+                            ).join("\n");
+                        }
+
+                        response = { answer };
+                        break;
+                    }
+                    if (askMetal) {
+                        const metals = await materialModel.find({ active: true });
+
+                        answer = "Giá kim loại hiện tại:\n" + metals.map(m => {
+                            const purity = m.purity ? ` (${m.purity})` : "";
+                            return `${m.name}${purity}: ${m.pricePerUnit.toLocaleString()} đ / ${m.unit.toLowerCase()}`;
+                        }).join("\n");
+
+                        response = { answer };
+                        break;
+                    }
+                    if (askGem) {
+                        const gems = await gemstoneModel.find({ active: true });
+
+                        answer = "Giá đá quý hiện tại:\n" + gems.map(g =>
+                            `${g.name}: ${g.pricePerUnit.toLocaleString()} đ / ${g.unit.toLowerCase()}`
+                        ).join("\n");
+
+                        response = { answer };
+                        break;
+                    }
+
+                    response = {
+                        answer: "Hiện tại shop chưa có thông tin giá vật liệu này",
+                    };
+                    break;
+                }
+                case "ASK_CATEGORY": {
+                    const categories = await categoryModel.find();
+                    if (!categories.length) {
+                        response = { answer: "Hiện tại shop chưa có danh mục sản phẩm." };
+                        break;
+                    }
+
+                    const answer =
+                        "Shop hiện có các danh mục sau:\n" +
+                        categories.map(c => `${c.name}`).join("\n");
+
+                    response = { answer };
+                    break;
+                }
+                case "ASK_SUBCATEGORY": {
+                    const { category } = intentData.entities;
+
+                    if (!category) {
+                        response = {
+                            answer: "Bạn muốn xem danh mục con của loại trang sức nào?"
+                        };
+                        break;
+                    }
+
+                    const parentCategory = await categoryModel.findOne({
+                        name: { $regex: category, $options: "i" }
+                    });
+
+                    if (!parentCategory) {
+                        response = { answer: "Shop không tìm thấy danh mục này." };
+                        break;
+                    }
+
+                    const subcategories = await subcategoryModel.find({
+                        categoryId: parentCategory._id,
+                        active: true
+                    });
+
+                    if (!subcategories.length) {
+                        response = {
+                            answer: `Danh mục ${parentCategory.name} hiện chưa có loại con.`
+                        };
+                        break;
+                    }
+
+                    const answer =
+                        `Các loại thuộc ${parentCategory.name} gồm:\n` +
+                        subcategories.map(s => `${s.name}`).join("\n");
+
+                    response = { answer };
+                    break;
+                }
                 case "SEARCH_PRODUCT": {
                     const { category, material, priceMax } = intentData.entities;
                     const pipeline = [];

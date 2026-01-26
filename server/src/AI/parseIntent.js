@@ -46,7 +46,9 @@ export async function parseIntent(message) {
                                 "CHECK_ORDER_STATUS",
                                 "ASK_PAYMENT",
                                 "ASK_SHIPPING",
-                                "ASK_PROMOTION",
+                                "ASK_CATEGORY",
+                                "ASK_SUBCATEGORY",
+                                "ASK_MATERIAL_PRICE",
                                 "GREETING",
                                 "GOODBYE",
                                 "UNKNOWN",
@@ -83,7 +85,7 @@ export async function parseIntent(message) {
                 category: parsed.entities?.category ?? null,
                 subcategory: parsed.entities?.subcategory ?? null,
                 material: parsed.entities?.material ?? null,
-                priceMax: parsed.entities?.priceMax ?? null,
+                priceMax: parsed.entities?.priceMax ?? null
             },
         };
     } catch (err) {
@@ -93,7 +95,7 @@ export async function parseIntent(message) {
                 category: null,
                 subcategory: null,
                 material: null,
-                priceMax: null,
+                priceMax: null
             },
         };
     }

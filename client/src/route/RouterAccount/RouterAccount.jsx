@@ -10,6 +10,7 @@ import { DetailProduct } from '@/page/Account/DetailProduct/DetailProduct'
 import { Cart } from '@/page/Account/Cart/Cart'
 import { CustomerChat } from '@/page/Account/CustomerChat/CustomerChat'
 import { Compare } from '@/page/Account/Compare/Compare'
+import { About } from '@/page/Account/About/About'
 
 export const RouterAccount = () => {
     return (
@@ -23,6 +24,7 @@ export const RouterAccount = () => {
                 <Route path='product/detail/:id' element={<DetailProduct />} />
                 <Route path='cart' element={<Cart />} />
                 <Route path='chat-customer' element={<CustomerChat />} />
+                <Route path='about' element={<About />} />
                 <Route index element={<Home />} />
             </Route>
         </Routes>

@@ -39,10 +39,7 @@ export const Header = () => {
                         <Link to="compare">Comapre</Link>
                     </li>
                     <li>
-                        About
-                    </li>
-                    <li>
-                        Contact
+                        <Link to="about">About</Link>
                     </li>
                 </ul>
 
