@@ -27,6 +27,7 @@ export const API_DELETE_IMG_SUBCATE_TEM = "/api/subcategory/delete-img-tem"
 
 export const API_GET_PRODUCT = "/api/product"
 export const API_GET_PRODUCT_BY_ID = "/api/product"
+export const API_GET_PRODUCT_BY_ID_TO_EDIT = "/api/product/edit"
 export const API_EDIT_PRODUCT = "/api/product"
 export const API_DELETE_PRODUCT = "/api/product"
 export const API_CREATE_PRODUCT = "/api/product"
@@ -104,3 +105,5 @@ export const API_PAYMENT_CUSTOM = "/api/payment/custom"
 export const API_GET_REVIEW = "/api/review"
 export const API_CREATE_REVIEW = "/api/review"
 export const API_GET_ALL_VIEW = "/api/review/all"
+
+export const API_DASHBOARD = "/api/dashboard"

@@ -26,6 +26,7 @@ import provincesRoute from "./routes/provinces.route.js"
 import wishRoute from "./routes/wish.route.js"
 import customRoute from "./routes/custom.route.js"
 import fileRoute from "./routes/file.route.js"
+import dashboardRoute from "./routes/dashboard.route.js"
 import helmet from "helmet";
 import chatBotRoute from "./routes/chatBox.route.js"
 import paymentController from "./controller/payment.controller.js"
@@ -63,13 +64,14 @@ app.use("/api/gemstone", authUser, gemstoneRoute)
 app.use("/api/items", authUser, itemRoute)
 app.use("/api/coupon", authUser, couponRoute)
 app.use("/api/order", authUser, orderRoute)
-app.use("/api/payment", authUser, paymentRoute)
+app.use("/api/payment", paymentRoute)
 app.use("/api/wish", authUser, wishRoute)
 app.use("/api/custom", authUser, customRoute)
-app.post("/api/payment/success", paymentController.paymentCallback)
-app.post("/api/payment/webhook", paymentController.webhook)
+// app.post("/api/payment/success", paymentController.paymentCallback)
+// app.post("/api/payment/webhook", paymentController.webhook)
 app.use("/api/provinces", provincesRoute)
 app.use("/api/file", fileRoute)
+app.use("/api/dashboard", authUser, dashboardRoute)
 const server = http.createServer(app)
 const io = new Server(server, {
   cors: {
