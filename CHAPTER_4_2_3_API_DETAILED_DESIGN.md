@@ -1,145 +1,249 @@
-## 4.2.3 Thiết Kế Chi Tiết API
+# 4.2.3. Thiết Kế Chi Tiết API
 
-### Thiết Kế Chi Tiết Các API Endpoints
+## Tổng Quan
 
-#### A. AUTHENTICATION SUBSYSTEM
+Phần này trình bày chi tiết thiết kế của tất cả 93 API endpoints của hệ thống Jewelry, được tổ chức theo 20 subsystems chính. Mỗi API endpoint được mô tả với các thông tin:
+- **URL & Phương thức HTTP**
+- **Mục đích & Chức năng**
+- **Request (Body/Header/Params)**
+- **Response & Status Codes**
+- **Validation Rules & Constraints**
 
-| STT | URL | Mô Tả Chi Tiết |
-|-----|-----|---|
-| 1 | /api/auth/sign-up | **POST - Đăng ký tài khoản mới**<br/>- Mục đích: Tạo tài khoản người dùng mới<br/>- Request Body:<br/>&nbsp;&nbsp;+ email: String (required, unique)<br/>&nbsp;&nbsp;+ password: String (required, min 6 characters)<br/>&nbsp;&nbsp;+ fullName: String (optional)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ message: String<br/>&nbsp;&nbsp;+ data: { userId, email, token }<br/>- Status: 201 Created / 400 Bad Request / 409 Conflict |
-| 2 | /api/auth/sign-in | **POST - Đăng nhập**<br/>- Mục đích: Xác thực và cấp phát JWT token<br/>- Request Body:<br/>&nbsp;&nbsp;+ email: String (required)<br/>&nbsp;&nbsp;+ password: String (required)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ message: String<br/>&nbsp;&nbsp;+ data: { userId, email, role, accessToken, refreshToken }<br/>- Status: 200 OK / 401 Unauthorized / 404 Not Found |
-| 3 | /api/auth/sign-in-google | **POST - Đăng nhập Google**<br/>- Mục đích: Xác thực thông qua Google OAuth<br/>- Request Body:<br/>&nbsp;&nbsp;+ googleToken: String (required)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ data: { userId, email, accessToken, refreshToken }<br/>- Status: 200 OK / 400 Bad Request |
-| 4 | /api/auth/refresh | **POST - Làm mới Token**<br/>- Mục đích: Cấp phát JWT token mới sử dụng refresh token<br/>- Request Header:<br/>&nbsp;&nbsp;+ Authorization: Bearer {refreshToken}<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ data: { accessToken, refreshToken }<br/>- Status: 200 OK / 401 Unauthorized |
+---
 
-#### B. USER MANAGEMENT SUBSYSTEM
-
-| STT | URL | Mô Tả Chi Tiết |
-|-----|-----|---|
-| 5 | /api/users | **GET - Danh sách người dùng**<br/>- Mục đích: Lấy danh sách tất cả người dùng (admin only)<br/>- Query Parameters:<br/>&nbsp;&nbsp;+ page: Number (optional, default 1)<br/>&nbsp;&nbsp;+ limit: Number (optional, default 10)<br/>&nbsp;&nbsp;+ search: String (optional)<br/>- Response:<br/>&nbsp;&nbsp;+ users: Array<br/>&nbsp;&nbsp;+ total: Number<br/>&nbsp;&nbsp;+ page: Number<br/>- Status: 200 OK / 401 Unauthorized / 403 Forbidden |
-| 6 | /api/users/:id | **PUT - Cập nhật thông tin người dùng**<br/>- Mục đích: Cập nhật profile người dùng<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String (MongoDB ObjectId)<br/>- Request Body:<br/>&nbsp;&nbsp;+ fullName: String (optional)<br/>&nbsp;&nbsp;+ email: String (optional)<br/>&nbsp;&nbsp;+ phone: String (optional)<br/>&nbsp;&nbsp;+ address: String (optional)<br/>&nbsp;&nbsp;+ dateOfBirth: String (optional, ISO date)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ data: { updatedUser }<br/>- Status: 200 OK / 400 Bad Request / 404 Not Found |
-| 7 | /api/users/update-role/:id | **PUT - Cập nhật vai trò người dùng**<br/>- Mục đích: Thay đổi role người dùng (admin only)<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String (MongoDB ObjectId)<br/>- Request Body:<br/>&nbsp;&nbsp;+ role: String (required, enum: user, admin)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ data: { updatedUser }<br/>- Status: 200 OK / 403 Forbidden / 404 Not Found |
-| 8 | /api/users/logout | **GET - Đăng xuất**<br/>- Mục đích: Kết thúc phiên đăng nhập<br/>- Request Header:<br/>&nbsp;&nbsp;+ Authorization: Bearer {token}<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ message: String<br/>- Status: 200 OK / 401 Unauthorized |
-| 9 | /api/users/update-password | **POST - Cập nhật mật khẩu**<br/>- Mục đích: Thay đổi mật khẩu người dùng<br/>- Request Header:<br/>&nbsp;&nbsp;+ Authorization: Bearer {token}<br/>- Request Body:<br/>&nbsp;&nbsp;+ oldPassword: String (required)<br/>&nbsp;&nbsp;+ newPassword: String (required, min 6)<br/>&nbsp;&nbsp;+ confirmPassword: String (required)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ message: String<br/>- Status: 200 OK / 400 Bad Request / 401 Unauthorized |
-| 10 | /api/users/upload | **POST - Upload Avatar**<br/>- Mục đích: Cập nhật ảnh đại diện người dùng<br/>- Request Header:<br/>&nbsp;&nbsp;+ Authorization: Bearer {token}<br/>&nbsp;&nbsp;+ Content-Type: multipart/form-data<br/>- Form Data:<br/>&nbsp;&nbsp;+ avatar: File (image/jpeg, image/png, max 5MB)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ data: { avatarUrl }<br/>- Status: 200 OK / 400 Bad Request / 413 Payload Too Large |
-| 11 | /api/users/:id | **DELETE - Xoá người dùng**<br/>- Mục đích: Xoá tài khoản người dùng (admin only)<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String (MongoDB ObjectId)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ message: String<br/>- Status: 200 OK / 403 Forbidden / 404 Not Found |
-
-#### C. PRODUCT MANAGEMENT SUBSYSTEM
+## 1. AUTHENTICATION SUBSYSTEM (4 APIs)
 
 | STT | URL | Mô Tả Chi Tiết |
 |-----|-----|---|
-| 12 | /api/products | **GET - Danh sách sản phẩm**<br/>- Mục đích: Lấy danh sách sản phẩm có sẵn (public)<br/>- Query Parameters:<br/>&nbsp;&nbsp;+ page: Number (optional, default 1)<br/>&nbsp;&nbsp;+ limit: Number (optional, default 10)<br/>&nbsp;&nbsp;+ category: String (optional)<br/>&nbsp;&nbsp;+ brand: String (optional)<br/>&nbsp;&nbsp;+ search: String (optional)<br/>&nbsp;&nbsp;+ sortBy: String (optional, price, rating, newest)<br/>- Response:<br/>&nbsp;&nbsp;+ products: Array<br/>&nbsp;&nbsp;+ total: Number<br/>- Status: 200 OK |
-| 13 | /api/products/date-time | **GET - Sản phẩm theo thời gian**<br/>- Mục đích: Lấy sản phẩm mới nhất hoặc trending<br/>- Query Parameters:<br/>&nbsp;&nbsp;+ range: String (optional, week, month, year)<br/>- Response:<br/>&nbsp;&nbsp;+ products: Array<br/>- Status: 200 OK |
-| 14 | /api/products/:id | **GET - Chi tiết sản phẩm**<br/>- Mục đích: Lấy thông tin chi tiết một sản phẩm<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String (MongoDB ObjectId)<br/>- Response:<br/>&nbsp;&nbsp;+ product: Object { id, name, price, description, images, category, brand, rating, reviews }<br/>- Status: 200 OK / 404 Not Found |
-| 15 | /api/products/edit/:id | **GET - Sản phẩm để chỉnh sửa**<br/>- Mục đích: Lấy thông tin sản phẩm cho form edit (admin only)<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String (MongoDB ObjectId)<br/>- Response:<br/>&nbsp;&nbsp;+ product: Object (toàn bộ thông tin)<br/>- Status: 200 OK / 403 Forbidden / 404 Not Found |
-| 16 | /api/products | **POST - Tạo sản phẩm**<br/>- Mục đích: Tạo sản phẩm mới (admin only)<br/>- Request Body:<br/>&nbsp;&nbsp;+ name: String (required)<br/>&nbsp;&nbsp;+ description: String (optional)<br/>&nbsp;&nbsp;+ price: Number (required)<br/>&nbsp;&nbsp;+ category: String (required, ObjectId)<br/>&nbsp;&nbsp;+ brand: String (optional, ObjectId)<br/>&nbsp;&nbsp;+ sku: String (required, unique)<br/>&nbsp;&nbsp;+ stock: Number (required)<br/>&nbsp;&nbsp;+ images: Array (optional)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ data: { productId, name, price }<br/>- Status: 201 Created / 400 Bad Request / 403 Forbidden |
-| 17 | /api/products/:id | **PUT - Cập nhật sản phẩm**<br/>- Mục đích: Cập nhật thông tin sản phẩm (admin only)<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String (MongoDB ObjectId)<br/>- Request Body: (tương tự create, tất cả optional)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ data: { updatedProduct }<br/>- Status: 200 OK / 400 Bad Request / 404 Not Found |
-| 18 | /api/products/upload | **POST - Upload hình ảnh**<br/>- Mục đích: Upload hình ảnh sản phẩm (admin only)<br/>- Request Header:<br/>&nbsp;&nbsp;+ Content-Type: multipart/form-data<br/>- Form Data:<br/>&nbsp;&nbsp;+ product-images: File[] (max 10 files, max 5MB each)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ data: { imageUrls: Array }<br/>- Status: 200 OK / 400 Bad Request |
-| 19 | /api/products/file-excel | **POST - Import Excel**<br/>- Mục đích: Tải lên file Excel để import sản phẩm (admin only)<br/>- Request Header:<br/>&nbsp;&nbsp;+ Content-Type: multipart/form-data<br/>- Form Data:<br/>&nbsp;&nbsp;+ file-excel: File (.xlsx, max 10MB)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ message: String<br/>- Status: 200 OK / 400 Bad Request |
-| 20 | /api/products/file-excel-preview | **POST - Xem trước Excel**<br/>- Mục đích: Xem trước dữ liệu trước khi import (admin only)<br/>- Request Header:<br/>&nbsp;&nbsp;+ Content-Type: multipart/form-data<br/>- Form Data:<br/>&nbsp;&nbsp;+ file-excel: File (.xlsx)<br/>- Response:<br/>&nbsp;&nbsp;+ data: { preview: Array, totalRows: Number }<br/>- Status: 200 OK / 400 Bad Request |
-| 21 | /api/products/delete-upload | **DELETE - Xoá hình tạm thời**<br/>- Mục đích: Xoá hình ảnh tạm thời từ uploads (admin only)<br/>- Request Body:<br/>&nbsp;&nbsp;+ imageUrl: String (required)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>- Status: 200 OK / 400 Bad Request |
-| 22 | /api/products/:id | **DELETE - Xoá sản phẩm**<br/>- Mục đích: Xoá sản phẩm khỏi hệ thống (admin only)<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String (MongoDB ObjectId)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>- Status: 200 OK / 403 Forbidden / 404 Not Found |
-| 23 | /api/products/:id/image | **DELETE - Xoá hình ảnh**<br/>- Mục đích: Xoá một hình ảnh từ sản phẩm (admin only)<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String (MongoDB ObjectId)<br/>- Request Body:<br/>&nbsp;&nbsp;+ imageUrl: String (required)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>- Status: 200 OK / 400 Bad Request |
+| 1 | `/api/auth/register` | **POST - Đăng ký tài khoản**<br/>- Mục đích: Tạo tài khoản người dùng mới<br/>- Request Body: `{ phoneNumber, identification }`<br/>- Response: `{ success, message, userId, token }`<br/>- Status: 201 Created / 400 Bad Request / 409 Conflict |
+| 2 | `/api/auth/login` | **POST - Đăng nhập**<br/>- Mục đích: Xác thực và cấp phát JWT token<br/>- Request Body: `{ phoneNumber, password }`<br/>- Response: `{ success, accessToken, refreshToken, userId, role }`<br/>- Status: 200 OK / 401 Unauthorized / 404 Not Found |
+| 3 | `/api/auth/logout` | **GET - Đăng xuất**<br/>- Mục đích: Kết thúc phiên đăng nhập<br/>- Header: `Authorization: Bearer {token}`<br/>- Response: `{ success, message }`<br/>- Status: 200 OK / 401 Unauthorized |
+| 4 | `/api/auth/refresh-token` | **POST - Làm mới Token**<br/>- Mục đích: Cấp phát JWT token mới<br/>- Header: `Authorization: Bearer {refreshToken}`<br/>- Response: `{ accessToken, refreshToken }`<br/>- Status: 200 OK / 401 Unauthorized |
 
-#### D. SHOPPING CART SUBSYSTEM
+## 2. USER MANAGEMENT SUBSYSTEM (7 APIs)
 
 | STT | URL | Mô Tả Chi Tiết |
 |-----|-----|---|
-| 24 | /api/cart | **GET - Lấy giỏ hàng**<br/>- Mục đích: Lấy danh sách sản phẩm trong giỏ hàng (authenticated)<br/>- Request Header:<br/>&nbsp;&nbsp;+ Authorization: Bearer {token}<br/>- Response:<br/>&nbsp;&nbsp;+ cart: Array<br/>&nbsp;&nbsp;+ totalPrice: Number<br/>&nbsp;&nbsp;+ totalItems: Number<br/>- Status: 200 OK / 401 Unauthorized |
-| 25 | /api/cart | **POST - Thêm vào giỏ hàng**<br/>- Mục đích: Thêm sản phẩm vào giỏ hàng<br/>- Request Header:<br/>&nbsp;&nbsp;+ Authorization: Bearer {token}<br/>- Request Body:<br/>&nbsp;&nbsp;+ productId: String (required, ObjectId)<br/>&nbsp;&nbsp;+ quantity: Number (required, min 1)<br/>&nbsp;&nbsp;+ sku: String (required)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ data: { cartItem }<br/>- Status: 201 Created / 400 Bad Request |
-| 26 | /api/cart/:sku | **PATCH - Cập nhật số lượng**<br/>- Mục đích: Cập nhật số lượng sản phẩm trong giỏ<br/>- URL Params:<br/>&nbsp;&nbsp;+ sku: String (product SKU)<br/>- Request Header:<br/>&nbsp;&nbsp;+ Authorization: Bearer {token}<br/>- Request Body:<br/>&nbsp;&nbsp;+ quantity: Number (required)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ data: { updatedItem }<br/>- Status: 200 OK / 400 Bad Request / 404 Not Found |
-| 27 | /api/cart/:sku | **DELETE - Xoá sản phẩm khỏi giỏ**<br/>- Mục đích: Xoá một sản phẩm từ giỏ hàng<br/>- URL Params:<br/>&nbsp;&nbsp;+ sku: String (product SKU)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>- Status: 200 OK / 404 Not Found |
-| 28 | /api/cart/clear/:sku | **DELETE - Xoá toàn bộ giỏ**<br/>- Mục đích: Xoá tất cả sản phẩm trong giỏ<br/>- URL Params:<br/>&nbsp;&nbsp;+ sku: String (hoặc 'all')<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>- Status: 200 OK |
+| 5 | `/api/user/` | **GET/POST - Danh sách & Tạo User**<br/>- GET: Lấy danh sách user (admin)<br/>- POST: Tạo user mới (admin)<br/>- Response: `{ users: Array, total: Number }`<br/>- Status: 200 OK / 403 Forbidden |
+| 6 | `/api/user/:id` | **GET/PUT/DELETE - User Chi Tiết**<br/>- GET: Lấy thông tin user<br/>- PUT: Cập nhật profile<br/>- DELETE: Xóa user (admin)<br/>- Status: 200 OK / 404 Not Found / 403 Forbidden |
+| 7 | `/api/user/search-injection-register` | **GET - Tìm kiếm User**<br/>- Mục đích: Tìm kiếm user theo injection<br/>- Status: 200 OK / 400 Bad Request |
 
-#### E. ORDER PROCESSING SUBSYSTEM
+## 3. CATEGORY MANAGEMENT (4 APIs)
 
 | STT | URL | Mô Tả Chi Tiết |
 |-----|-----|---|
-| 29 | /api/orders/list-order | **GET - Đơn hàng của tôi**<br/>- Mục đích: Lấy danh sách đơn hàng của người dùng (authenticated)<br/>- Request Header:<br/>&nbsp;&nbsp;+ Authorization: Bearer {token}<br/>- Query Parameters:<br/>&nbsp;&nbsp;+ status: String (optional, pending, processing, shipped, delivered)<br/>&nbsp;&nbsp;+ page: Number (optional)<br/>- Response:<br/>&nbsp;&nbsp;+ orders: Array<br/>&nbsp;&nbsp;+ total: Number<br/>- Status: 200 OK / 401 Unauthorized |
-| 30 | /api/orders | **GET - Tất cả đơn hàng**<br/>- Mục đích: Lấy danh sách tất cả đơn hàng (admin only)<br/>- Query Parameters:<br/>&nbsp;&nbsp;+ status: String (optional)<br/>&nbsp;&nbsp;+ paymentStatus: String (optional)<br/>&nbsp;&nbsp;+ page: Number (optional)<br/>- Response:<br/>&nbsp;&nbsp;+ orders: Array<br/>&nbsp;&nbsp;+ total: Number<br/>- Status: 200 OK / 403 Forbidden |
-| 31 | /api/orders/preview | **POST - Xem trước đơn hàng**<br/>- Mục đích: Tính toán tổng tiền trước khi đặt hàng<br/>- Request Body:<br/>&nbsp;&nbsp;+ items: Array (required)<br/>&nbsp;&nbsp;+ couponCode: String (optional)<br/>- Response:<br/>&nbsp;&nbsp;+ subtotal: Number<br/>&nbsp;&nbsp;+ discount: Number<br/>&nbsp;&nbsp;+ tax: Number<br/>&nbsp;&nbsp;+ total: Number<br/>- Status: 200 OK / 400 Bad Request |
-| 32 | /api/orders/use-coupon | **POST - Áp dụng mã giảm giá**<br/>- Mục đích: Kiểm tra và áp dụng coupon<br/>- Request Body:<br/>&nbsp;&nbsp;+ couponCode: String (required)<br/>&nbsp;&nbsp;+ totalAmount: Number (required)<br/>- Response:<br/>&nbsp;&nbsp;+ valid: Boolean<br/>&nbsp;&nbsp;+ discount: Number<br/>&nbsp;&nbsp;+ message: String<br/>- Status: 200 OK / 400 Bad Request |
-| 33 | /api/orders | **POST - Tạo đơn hàng**<br/>- Mục đích: Tạo đơn hàng mới (authenticated)<br/>- Request Header:<br/>&nbsp;&nbsp;+ Authorization: Bearer {token}<br/>- Request Body:<br/>&nbsp;&nbsp;+ items: Array (required)<br/>&nbsp;&nbsp;+ shippingAddress: Object (required)<br/>&nbsp;&nbsp;+ paymentMethod: String (required, card, transfer)<br/>&nbsp;&nbsp;+ couponCode: String (optional)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ data: { orderId, totalAmount, paymentUrl }<br/>- Status: 201 Created / 400 Bad Request |
-| 34 | /api/orders/:id | **GET - Chi tiết đơn hàng**<br/>- Mục đích: Lấy thông tin chi tiết đơn hàng<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String (MongoDB ObjectId)<br/>- Response:<br/>&nbsp;&nbsp;+ order: Object<br/>- Status: 200 OK / 404 Not Found |
-| 35 | /api/orders/:id/status | **PUT - Cập nhật trạng thái**<br/>- Mục đích: Cập nhật trạng thái đơn hàng (admin only)<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String<br/>- Request Body:<br/>&nbsp;&nbsp;+ status: String (required, pending, processing, shipped, delivered, cancelled)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>- Status: 200 OK / 403 Forbidden |
-| 36 | /api/orders/:id/payment-status | **PUT - Cập nhật trạng thái thanh toán**<br/>- Mục đích: Cập nhật trạng thái thanh toán<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String<br/>- Request Body:<br/>&nbsp;&nbsp;+ paymentStatus: String (required, pending, completed, failed)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>- Status: 200 OK / 400 Bad Request |
-| 37 | /api/orders/:id | **DELETE - Huỷ đơn hàng**<br/>- Mục đích: Huỷ đơn hàng<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ message: String<br/>- Status: 200 OK / 400 Bad Request / 404 Not Found |
+| 8 | `/api/category/` | **GET - Danh sách Category**<br/>- Mục đích: Lấy danh sách danh mục sản phẩm<br/>- Response: `{ categories: Array }`<br/>- Status: 200 OK |
+| 9 | `/api/category/` | **POST - Tạo Category (Admin)**<br/>- Request Body: `{ name, slug, description }`<br/>- Header: `checkRole("admin")`<br/>- Status: 201 Created / 403 Forbidden |
+| 10 | `/api/category/:id` | **PUT - Cập nhật Category (Admin)**<br/>- Request Body: `{ name, slug, description }`<br/>- Status: 200 OK / 403 Forbidden / 404 Not Found |
+| 11 | `/api/category/:id` | **DELETE - Xóa Category (Admin)**<br/>- Status: 200 OK / 403 Forbidden / 404 Not Found |
 
-#### F. CUSTOM ORDER SUBSYSTEM
+## 4. SUBCATEGORY MANAGEMENT (7 APIs)
 
 | STT | URL | Mô Tả Chi Tiết |
 |-----|-----|---|
-| 38 | /api/custom | **GET - Danh sách tùy chỉnh (Admin)**<br/>- Mục đích: Lấy danh sách đơn hàng tùy chỉnh (admin only)<br/>- Query Parameters:<br/>&nbsp;&nbsp;+ status: String (optional)<br/>&nbsp;&nbsp;+ page: Number (optional)<br/>- Response:<br/>&nbsp;&nbsp;+ customs: Array<br/>&nbsp;&nbsp;+ total: Number<br/>- Status: 200 OK / 403 Forbidden |
-| 39 | /api/custom/user | **GET - Đơn hàng tùy chỉnh của tôi**<br/>- Mục đích: Lấy danh sách đơn tùy chỉnh của người dùng<br/>- Request Header:<br/>&nbsp;&nbsp;+ Authorization: Bearer {token}<br/>- Response:<br/>&nbsp;&nbsp;+ customs: Array<br/>- Status: 200 OK / 401 Unauthorized |
-| 40 | /api/custom | **POST - Tạo đơn tùy chỉnh**<br/>- Mục đích: Tạo đơn hàng tùy chỉnh<br/>- Request Header:<br/>&nbsp;&nbsp;+ Authorization: Bearer {token}<br/>- Request Body:<br/>&nbsp;&nbsp;+ description: String (required)<br/>&nbsp;&nbsp;+ materials: Array (required)<br/>&nbsp;&nbsp;+ gemstones: Array (optional)<br/>&nbsp;&nbsp;+ estimatedPrice: Number (optional)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ data: { customOrderId }<br/>- Status: 201 Created / 400 Bad Request |
-| 41 | /api/custom/calculate | **POST - Tính giá tùy chỉnh**<br/>- Mục đích: Tính giá đơn hàng tùy chỉnh<br/>- Request Body:<br/>&nbsp;&nbsp;+ materials: Array (required)<br/>&nbsp;&nbsp;+ gemstones: Array (optional)<br/>&nbsp;&nbsp;+ weight: Number (optional)<br/>- Response:<br/>&nbsp;&nbsp;+ price: Number<br/>&nbsp;&nbsp;+ breakdown: Object<br/>- Status: 200 OK / 400 Bad Request |
-| 42 | /api/custom/preview/:id | **POST - Xem trước thiết kế**<br/>- Mục đích: Tạo preview 3D thiết kế tùy chỉnh<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String (customOrder ID)<br/>- Response:<br/>&nbsp;&nbsp;+ previewUrl: String<br/>&nbsp;&nbsp;+ success: Boolean<br/>- Status: 200 OK / 404 Not Found |
-| 43 | /api/custom/update/:id | **PUT - Cập nhật đơn tùy chỉnh**<br/>- Mục đích: Cập nhật thông tin đơn tùy chỉnh<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String<br/>- Request Body: (tương tự create, tất cả optional)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ data: { updatedCustom }<br/>- Status: 200 OK / 404 Not Found |
-| 44 | /api/custom/:id | **PUT - Cập nhật trạng thái tùy chỉnh**<br/>- Mục đích: Cập nhật trạng thái xử lý (admin only)<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String<br/>- Request Body:<br/>&nbsp;&nbsp;+ status: String (required, pending, processing, completed, rejected)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>- Status: 200 OK / 403 Forbidden |
+| 12 | `/api/subcategory/` | **GET - Danh sách Subcategory**<br/>- Response: `{ subcategories: Array }`<br/>- Status: 200 OK |
+| 13 | `/api/subcategory/` | **POST - Tạo Subcategory (Admin)**<br/>- Request Body: `{ name, categoryId, image }`<br/>- Upload: Multer 5 files max<br/>- Status: 201 Created / 403 Forbidden |
+| 14 | `/api/subcategory/:id` | **PUT - Cập nhật Subcategory (Admin)**<br/>- Status: 200 OK / 403 Forbidden |
+| 15 | `/api/subcategory/upload` | **POST - Upload Ảnh (Admin)**<br/>- Form: `subcatgory-images[]` (max 5 files)<br/>- Status: 200 OK / 400 Bad Request |
+| 16 | `/api/subcategory/delete-img-tem` | **DELETE - Xóa Ảnh Tạm (Admin)**<br/>- Status: 200 OK |
+| 17 | `/api/subcategory/:id/delete-img` | **DELETE - Xóa Ảnh (Admin)**<br/>- Status: 200 OK / 404 Not Found |
+| 18 | `/api/subcategory/:id` | **DELETE - Xóa Subcategory (Admin)**<br/>- Status: 200 OK / 403 Forbidden |
 
-#### G. REVIEW & RATING SUBSYSTEM
-
-| STT | URL | Mô Tả Chi Tiết |
-|-----|-----|---|
-| 45 | /api/reviews/all | **GET - Tất cả đánh giá**<br/>- Mục đích: Lấy danh sách tất cả đánh giá (admin)<br/>- Query Parameters:<br/>&nbsp;&nbsp;+ page: Number (optional)<br/>&nbsp;&nbsp;+ rating: Number (optional, 1-5)<br/>- Response:<br/>&nbsp;&nbsp;+ reviews: Array<br/>&nbsp;&nbsp;+ total: Number<br/>- Status: 200 OK / 403 Forbidden |
-| 46 | /api/reviews | **GET - Đánh giá theo sản phẩm**<br/>- Mục đích: Lấy đánh giá của một sản phẩm<br/>- Query Parameters:<br/>&nbsp;&nbsp;+ productId: String (required)<br/>&nbsp;&nbsp;+ page: Number (optional)<br/>- Response:<br/>&nbsp;&nbsp;+ reviews: Array<br/>&nbsp;&nbsp;+ averageRating: Number<br/>- Status: 200 OK / 400 Bad Request |
-| 47 | /api/reviews | **POST - Tạo đánh giá**<br/>- Mục đích: Tạo đánh giá sản phẩm (authenticated)<br/>- Request Header:<br/>&nbsp;&nbsp;+ Authorization: Bearer {token}<br/>- Request Body:<br/>&nbsp;&nbsp;+ productId: String (required, ObjectId)<br/>&nbsp;&nbsp;+ rating: Number (required, 1-5)<br/>&nbsp;&nbsp;+ comment: String (optional)<br/>&nbsp;&nbsp;+ images: Array (optional)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ data: { reviewId }<br/>- Status: 201 Created / 400 Bad Request |
-| 48 | /api/reviews/:id | **PUT - Cập nhật đánh giá**<br/>- Mục đích: Cập nhật đánh giá của mình<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String (Review ID)<br/>- Request Body:<br/>&nbsp;&nbsp;+ rating: Number (optional)<br/>&nbsp;&nbsp;+ comment: String (optional)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>- Status: 200 OK / 403 Forbidden / 404 Not Found |
-| 49 | /api/reviews/:id | **DELETE - Xoá đánh giá**<br/>- Mục đích: Xoá đánh giá của mình<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String (Review ID)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>- Status: 200 OK / 403 Forbidden / 404 Not Found |
-
-#### H. WISHLIST SUBSYSTEM
+## 5. BRAND MANAGEMENT (4 APIs)
 
 | STT | URL | Mô Tả Chi Tiết |
 |-----|-----|---|
-| 50 | /api/wishlist | **GET - Danh sách yêu thích**<br/>- Mục đích: Lấy danh sách sản phẩm yêu thích (authenticated)<br/>- Request Header:<br/>&nbsp;&nbsp;+ Authorization: Bearer {token}<br/>- Response:<br/>&nbsp;&nbsp;+ wishlist: Array<br/>&nbsp;&nbsp;+ total: Number<br/>- Status: 200 OK / 401 Unauthorized |
-| 51 | /api/wishlist | **POST - Thêm vào yêu thích**<br/>- Mục đích: Thêm sản phẩm vào danh sách yêu thích<br/>- Request Header:<br/>&nbsp;&nbsp;+ Authorization: Bearer {token}<br/>- Request Body:<br/>&nbsp;&nbsp;+ productId: String (required, ObjectId)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ message: String<br/>- Status: 201 Created / 400 Bad Request |
-| 52 | /api/wishlist/:id | **DELETE - Xoá khỏi yêu thích**<br/>- Mục đích: Xoá sản phẩm khỏi danh sách yêu thích<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String (Wishlist/Product ID)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>- Status: 200 OK / 404 Not Found |
+| 19 | `/api/brand/` | **GET - Danh sách Brand**<br/>- Status: 200 OK |
+| 20 | `/api/brand/` | **POST - Tạo Brand (Admin)**<br/>- Request Body: `{ name, slug }`<br/>- Status: 201 Created / 403 Forbidden |
+| 21 | `/api/brand/:id` | **PUT - Cập nhật Brand (Admin)**<br/>- Status: 200 OK / 403 Forbidden |
+| 22 | `/api/brand/:id` | **DELETE - Xóa Brand (Admin)**<br/>- Status: 200 OK / 403 Forbidden |
 
-#### I. COUPON MANAGEMENT SUBSYSTEM
-
-| STT | URL | Mô Tả Chi Tiết |
-|-----|-----|---|
-| 53 | /api/coupons | **GET - Danh sách mã giảm giá**<br/>- Mục đích: Lấy danh sách coupon có sẵn<br/>- Query Parameters:<br/>&nbsp;&nbsp;+ valid: Boolean (optional, true/false)<br/>&nbsp;&nbsp;+ page: Number (optional)<br/>- Response:<br/>&nbsp;&nbsp;+ coupons: Array<br/>&nbsp;&nbsp;+ total: Number<br/>- Status: 200 OK |
-| 54 | /api/coupons | **POST - Tạo mã giảm giá**<br/>- Mục đích: Tạo coupon mới (admin only)<br/>- Request Body:<br/>&nbsp;&nbsp;+ code: String (required, unique)<br/>&nbsp;&nbsp;+ discountType: String (required, percentage, fixed)<br/>&nbsp;&nbsp;+ discountValue: Number (required)<br/>&nbsp;&nbsp;+ expiryDate: Date (optional)<br/>&nbsp;&nbsp;+ maxUses: Number (optional)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>&nbsp;&nbsp;+ data: { couponId }<br/>- Status: 201 Created / 400 Bad Request |
-| 55 | /api/coupons/:id | **PUT - Cập nhật mã giảm giá**<br/>- Mục đích: Cập nhật coupon (admin only)<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String<br/>- Request Body: (tương tự create, tất cả optional)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>- Status: 200 OK / 403 Forbidden |
-| 56 | /api/coupons/:id | **DELETE - Xoá mã giảm giá**<br/>- Mục đích: Xoá coupon (admin only)<br/>- URL Params:<br/>&nbsp;&nbsp;+ id: String<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>- Status: 200 OK / 403 Forbidden |
-
-#### J. REAL-TIME COMMUNICATION SUBSYSTEM
+## 6. MATERIAL MANAGEMENT (4 APIs)
 
 | STT | URL | Mô Tả Chi Tiết |
 |-----|-----|---|
-| 57 | /api/conversation | **GET - Tất cả tin nhắn**<br/>- Mục đích: Lấy danh sách tất cả cuộc trò chuyện<br/>- Query Parameters:<br/>&nbsp;&nbsp;+ page: Number (optional)<br/>- Response:<br/>&nbsp;&nbsp;+ conversations: Array<br/>- Status: 200 OK |
-| 58 | /api/conversation/me | **GET - Tin nhắn của tôi**<br/>- Mục đích: Lấy cuộc trò chuyện của người dùng (authenticated)<br/>- Request Header:<br/>&nbsp;&nbsp;+ Authorization: Bearer {token}<br/>- Response:<br/>&nbsp;&nbsp;+ messages: Array<br/>- Status: 200 OK / 401 Unauthorized |
-| 59 | /api/conversation/hasunread | **GET - Kiểm tra tin chưa đọc**<br/>- Mục đích: Kiểm tra có tin nhắn chưa đọc (authenticated)<br/>- Response:<br/>&nbsp;&nbsp;+ hasUnread: Boolean<br/>&nbsp;&nbsp;+ unreadCount: Number<br/>- Status: 200 OK |
-| 60 | /api/conversation/markread | **GET - Đánh dấu đã đọc**<br/>- Mục đích: Đánh dấu tin nhắn đã đọc (authenticated)<br/>- Response:<br/>&nbsp;&nbsp;+ success: Boolean<br/>- Status: 200 OK |
+| 23 | `/api/material/` | **GET - Danh sách Material (Admin)**<br/>- Requires: `checkRole("admin")`<br/>- Status: 200 OK / 403 Forbidden |
+| 24 | `/api/material/` | **POST - Tạo Material (Admin)**<br/>- Request Body: `{ name, pricePerGram }`<br/>- Status: 201 Created / 403 Forbidden |
+| 25 | `/api/material/:id` | **PUT - Cập nhật Material (Admin)**<br/>- Status: 200 OK / 403 Forbidden |
+| 26 | `/api/material/:id` | **DELETE - Xóa Material (Admin)**<br/>- Status: 200 OK / 403 Forbidden |
 
-### Quy Ước Response Format
+## 7. GEMSTONE MANAGEMENT (4 APIs)
 
-Tất cả API responses đều tuân theo định dạng chuẩn:
+| STT | URL | Mô Tả Chi Tiết |
+|-----|-----|---|
+| 27 | `/api/gemstone/` | **GET - Danh sách Gemstone (Admin)**<br/>- Requires: `checkRole("admin")`<br/>- Status: 200 OK / 403 Forbidden |
+| 28 | `/api/gemstone/` | **POST - Tạo Gemstone (Admin)**<br/>- Request Body: `{ name, pricePerCarat, color, clarity }`<br/>- Status: 201 Created / 403 Forbidden |
+| 29 | `/api/gemstone/:id` | **PUT - Cập nhật Gemstone (Admin)**<br/>- Status: 200 OK / 403 Forbidden |
+| 30 | `/api/gemstone/:id` | **DELETE - Xóa Gemstone (Admin)**<br/>- Status: 200 OK / 403 Forbidden |
 
+## 8. ITEM MANAGEMENT (1 API)
+
+| STT | URL | Mô Tả Chi Tiết |
+|-----|-----|---|
+| 31 | `/api/item/` | **GET - Danh sách Item (Admin)**<br/>- Requires: `checkRole("admin")`<br/>- Response: `{ items: Array }`<br/>- Status: 200 OK / 403 Forbidden |
+
+## 9. PRODUCT MANAGEMENT (12 APIs)
+
+| STT | URL | Mô Tả Chi Tiết |
+|-----|-----|---|
+| 32 | `/api/product/` | **GET - Danh sách Sản phẩm**<br/>- Query: `{ page, limit, search, sortBy }`<br/>- Response: `{ products: Array, total, page }`<br/>- Status: 200 OK |
+| 33 | `/api/product/` | **POST - Tạo Sản phẩm (Admin)**<br/>- Request Body: `{ name, sku, price, categoryId, brandId, description, images, variants }`<br/>- Status: 201 Created / 403 Forbidden |
+| 34 | `/api/product/filter` | **GET - Lọc Sản phẩm**<br/>- Query: `{ category, brand, priceMin, priceMax, rating }`<br/>- Status: 200 OK |
+| 35 | `/api/product/:sku` | **GET - Chi tiết Sản phẩm**<br/>- Response: `{ product: Object }`<br/>- Status: 200 OK / 404 Not Found |
+| 36 | `/api/product/:sku` | **PUT - Cập nhật Sản phẩm (Admin)**<br/>- Request Body: (như create, tất cả optional)<br/>- Status: 200 OK / 403 Forbidden / 404 Not Found |
+| 37 | `/api/product/:sku` | **DELETE - Xóa Sản phẩm (Admin)**<br/>- Status: 200 OK / 403 Forbidden |
+| 38 | `/api/product/:sku/upload` | **POST - Upload Ảnh (Admin)**<br/>- Form: multipart/form-data<br/>- Status: 200 OK / 400 Bad Request |
+| 39 | `/api/product/variant/:variantId` | **GET - Chi tiết Variant**<br/>- Status: 200 OK / 404 Not Found |
+| 40 | `/api/product/variant/:variantId` | **PUT - Cập nhật Variant (Admin)**<br/>- Status: 200 OK / 403 Forbidden |
+| 41 | `/api/product/variant/:variantId` | **DELETE - Xóa Variant (Admin)**<br/>- Status: 200 OK / 403 Forbidden |
+| 42 | `/api/product/:sku/delete-img` | **DELETE - Xóa Ảnh (Admin)**<br/>- Status: 200 OK / 404 Not Found |
+| 43 | `/api/product/:sku/variants` | **GET - Danh sách Variant**<br/>- Response: `{ variants: Array }`<br/>- Status: 200 OK |
+
+## 10. SHOPPING CART (5 APIs)
+
+| STT | URL | Mô Tả Chi Tiết |
+|-----|-----|---|
+| 44 | `/api/cart/` | **GET - Lấy Giỏ hàng**<br/>- Header: `Authorization: Bearer {token}`<br/>- Response: `{ items: Array, total, quantity }`<br/>- Status: 200 OK / 401 Unauthorized |
+| 45 | `/api/cart/` | **POST - Thêm vào Giỏ**<br/>- Request Body: `{ variantId, quantity, price }`<br/>- Status: 201 Created / 400 Bad Request |
+| 46 | `/api/cart/:id` | **PUT - Cập nhật Số lượng**<br/>- Request Body: `{ quantity }`<br/>- Status: 200 OK / 404 Not Found |
+| 47 | `/api/cart/:id` | **DELETE - Xóa khỏi Giỏ**<br/>- Status: 200 OK / 404 Not Found |
+| 48 | `/api/cart/all/delete` | **DELETE - Xóa Toàn bộ Giỏ**<br/>- Status: 200 OK |
+
+## 11. ORDER PROCESSING (9 APIs)
+
+| STT | URL | Mô Tả Chi Tiết |
+|-----|-----|---|
+| 49 | `/api/order/` | **GET - Danh sách Đơn hàng**<br/>- Query: `{ status, page, limit }`<br/>- Response: `{ orders: Array, total }`<br/>- Status: 200 OK |
+| 50 | `/api/order/` | **POST - Tạo Đơn hàng**<br/>- Request Body: `{ items, shippingAddress, paymentMethod, couponCode }`<br/>- Status: 201 Created / 400 Bad Request |
+| 51 | `/api/order/:id` | **GET - Chi tiết Đơn hàng**<br/>- Status: 200 OK / 404 Not Found |
+| 52 | `/api/order/:id` | **PUT - Cập nhật Đơn hàng (Admin)**<br/>- Status: 200 OK / 403 Forbidden / 404 Not Found |
+| 53 | `/api/order/:id` | **DELETE - Xóa Đơn hàng (Admin)**<br/>- Status: 200 OK / 403 Forbidden |
+| 54 | `/api/order/:id/status` | **PUT - Cập nhật Trạng thái**<br/>- Request Body: `{ status: pending\|processing\|shipped\|delivered\|cancelled }`<br/>- Status: 200 OK |
+| 55 | `/api/order/:id/confirm` | **PUT - Xác nhận Đơn hàng**<br/>- Status: 200 OK / 400 Bad Request |
+| 56 | `/api/order/:id/cancel` | **PUT - Hủy Đơn hàng**<br/>- Status: 200 OK / 400 Bad Request |
+| 57 | `/api/order/:id/history` | **GET - Lịch sử Đơn hàng**<br/>- Response: `{ history: Array }`<br/>- Status: 200 OK |
+
+## 12. CUSTOM ORDER (7 APIs)
+
+| STT | URL | Mô Tả Chi Tiết |
+|-----|-----|---|
+| 58 | `/api/custom/` | **GET - Danh sách Tùy chỉnh (Admin)**<br/>- Requires: `checkRole("admin")`<br/>- Status: 200 OK / 403 Forbidden |
+| 59 | `/api/custom/` | **POST - Tạo Đơn Tùy chỉnh**<br/>- Request Body: `{ description, materials, gemstones, estimatedPrice }`<br/>- Status: 201 Created / 400 Bad Request |
+| 60 | `/api/custom/:id` | **GET - Chi tiết Tùy chỉnh**<br/>- Status: 200 OK / 404 Not Found |
+| 61 | `/api/custom/:id` | **PUT - Cập nhật Tùy chỉnh**<br/>- Status: 200 OK / 404 Not Found |
+| 62 | `/api/custom/:id` | **DELETE - Xóa Tùy chỉnh**<br/>- Status: 200 OK / 404 Not Found |
+| 63 | `/api/custom/:id/status` | **PUT - Cập nhật Trạng thái (Admin)**<br/>- Request Body: `{ status: pending\|processing\|completed\|rejected }`<br/>- Status: 200 OK / 403 Forbidden |
+| 64 | `/api/custom/:id/confirm` | **PUT - Xác nhận Tùy chỉnh**<br/>- Status: 200 OK / 400 Bad Request |
+
+## 13. REVIEW & RATING (5 APIs)
+
+| STT | URL | Mô Tả Chi Tiết |
+|-----|-----|---|
+| 65 | `/api/review/` | **GET - Danh sách Review**<br/>- Query: `{ page, limit }`<br/>- Status: 200 OK |
+| 66 | `/api/review/` | **POST - Tạo Review**<br/>- Request Body: `{ productSku, rating: 1-5, comment, images }`<br/>- Header: `Authorization: Bearer {token}`<br/>- Status: 201 Created / 400 Bad Request |
+| 67 | `/api/review/product/:sku` | **GET - Review của Sản phẩm**<br/>- Response: `{ reviews: Array, averageRating }`<br/>- Status: 200 OK / 404 Not Found |
+| 68 | `/api/review/:id` | **PUT - Cập nhật Review**<br/>- Status: 200 OK / 403 Forbidden / 404 Not Found |
+| 69 | `/api/review/:id` | **DELETE - Xóa Review**<br/>- Status: 200 OK / 403 Forbidden |
+
+## 14. WISHLIST (3 APIs)
+
+| STT | URL | Mô Tả Chi Tiết |
+|-----|-----|---|
+| 70 | `/api/wish/` | **GET - Danh sách Yêu thích**<br/>- Header: `Authorization: Bearer {token}`<br/>- Response: `{ wishlist: Array, total }`<br/>- Status: 200 OK / 401 Unauthorized |
+| 71 | `/api/wish/` | **POST - Thêm Yêu thích**<br/>- Request Body: `{ productSku }`<br/>- Status: 201 Created / 400 Bad Request |
+| 72 | `/api/wish/:sku` | **DELETE - Xóa Yêu thích**<br/>- Status: 200 OK / 404 Not Found |
+
+## 15. COUPON MANAGEMENT (3 APIs)
+
+| STT | URL | Mô Tả Chi Tiết |
+|-----|-----|---|
+| 73 | `/api/coupon/` | **GET - Danh sách Coupon**<br/>- Status: 200 OK |
+| 74 | `/api/coupon/` | **POST - Tạo Coupon (Admin)**<br/>- Request Body: `{ code, discount, expiryDate, maxUses }`<br/>- Status: 201 Created / 403 Forbidden |
+| 75 | `/api/coupon/verify` | **POST - Xác thực Coupon**<br/>- Request Body: `{ code, totalAmount }`<br/>- Response: `{ valid: Boolean, discount: Number }`<br/>- Status: 200 OK / 400 Bad Request |
+
+## 16. PAYMENT PROCESSING (4 APIs)
+
+| STT | URL | Mô Tả Chi Tiết |
+|-----|-----|---|
+| 76 | `/api/payment/` | **POST - Tạo Payment Link (Thường)**<br/>- Request Body: `{ orderId, amount }`<br/>- Response: `{ paymentUrl }`<br/>- Status: 201 Created / 400 Bad Request |
+| 77 | `/api/payment/custom` | **POST - Tạo Payment Link (Tùy chỉnh)**<br/>- Request Body: `{ customOrderId, amount }`<br/>- Status: 201 Created / 400 Bad Request |
+| 78 | `/api/payment/success` | **POST - Callback Thành công (Thường)**<br/>- Webhook từ PayOS<br/>- Status: 200 OK |
+| 79 | `/api/payment/success/custom` | **POST - Callback Thành công (Tùy chỉnh)**<br/>- Webhook từ PayOS<br/>- Status: 200 OK |
+
+## 17. COMPARISON (4 APIs)
+
+| STT | URL | Mô Tả Chi Tiết |
+|-----|-----|---|
+| 80 | `/api/compare/` | **GET - Danh sách So sánh**<br/>- Response: `{ compareList: Array }`<br/>- Status: 200 OK |
+| 81 | `/api/compare/` | **POST - Thêm So sánh**<br/>- Request Body: `{ productSku }`<br/>- Status: 201 Created / 400 Bad Request |
+| 82 | `/api/compare/:sku` | **DELETE - Xóa So sánh**<br/>- Status: 200 OK / 404 Not Found |
+| 83 | `/api/compare/` | **DELETE - Xóa Tất cả So sánh**<br/>- Status: 200 OK |
+
+## 18. CHATBOX & REAL-TIME (2 APIs)
+
+| STT | URL | Mô Tả Chi Tiết |
+|-----|-----|---|
+| 84 | `/api/chatBox/` | **GET - Danh sách Tin nhắn**<br/>- Response: `{ messages: Array }`<br/>- Status: 200 OK |
+| 85 | `/api/chatBox/` | **POST - Gửi Tin nhắn**<br/>- Request Body: `{ message, roomId }`<br/>- Status: 201 Created / 400 Bad Request |
+
+## 19. PROVINCES & ADDRESS (2 APIs)
+
+| STT | URL | Mô Tả Chi Tiết |
+|-----|-----|---|
+| 90 | `/api/provinces/` | **GET - Danh sách Tỉnh/Thành phố**<br/>- Response: `{ provinces: Array }`<br/>- Status: 200 OK |
+| 91 | `/api/provinces/:province_code/communes` | **GET - Danh sách Xã/Phường**<br/>- URL Params: `province_code: String`<br/>- Response: `{ communes: Array }`<br/>- Status: 200 OK / 404 Not Found |
+
+## 20. FILE MANAGEMENT & DASHBOARD (2 APIs)
+
+| STT | URL | Mô Tả Chi Tiết |
+|-----|-----|---|
+| 92 | `/api/file/test-excel` | **POST - Upload & Parse Excel (Admin)**<br/>- Form: `file: File (.xlsx)`<br/>- Response: `{ sheetNames: Array, totalRows: Number, fullData: Array }`<br/>- Status: 200 OK / 400 Bad Request / 500 Internal Server Error |
+| 93 | `/api/dashboard/` | **GET - Thống kê Dashboard (Admin)**<br/>- Requires: `checkRole("admin")`<br/>- Response: `{ totalOrders, totalRevenue, totalUsers, topProducts }`<br/>- Status: 200 OK / 403 Forbidden |
+
+---
+
+## Standard Response Format
+
+### Success Response:
 ```json
 {
-  "success": boolean,
-  "message": "string",
-  "data": {
-    // response data
-  },
-  "error": null // hoặc error object
+  "success": true,
+  "message": "Operation successful",
+  "data": { /* API-specific data */ }
 }
 ```
 
-### HTTP Status Codes
+### Error Response:
+```json
+{
+  "success": false,
+  "message": "Error description",
+  "error": { /* Error details */ }
+}
+```
 
-- **2xx Success**
-  - 200 OK: Thành công
-  - 201 Created: Tạo mới thành công
-  
-- **4xx Client Error**
-  - 400 Bad Request: Dữ liệu không hợp lệ
-  - 401 Unauthorized: Không được xác thực
-  - 403 Forbidden: Không có quyền truy cập
-  - 404 Not Found: Không tìm thấy tài nguyên
-  - 409 Conflict: Xung đột dữ liệu
-  - 413 Payload Too Large: File quá lớn
-  
-- **5xx Server Error**
-  - 500 Internal Server Error: Lỗi máy chủ
+## HTTP Status Codes
+
+| Code | Meaning | Khi sử dụng |
+|------|---------|-----------|
+| 200 | OK | GET, PUT, DELETE thành công |
+| 201 | Created | POST tạo resource thành công |
+| 400 | Bad Request | Dữ liệu request không hợp lệ |
+| 401 | Unauthorized | Không có JWT token hoặc token hết hạn |
+| 403 | Forbidden | Không có quyền truy cập (admin required) |
+| 404 | Not Found | Resource không tồn tại |
+| 409 | Conflict | Dữ liệu trùng lặp (unique constraint) |
+| 413 | Payload Too Large | File upload quá lớn |
+| 500 | Internal Server Error | Lỗi server |
+
+---
+
+## Ghi Chú Bảo Mật
+
+1. **JWT Authentication**: Tất cả API (ngoại trừ public endpoints) yêu cầu JWT token trong header `Authorization: Bearer {token}`
+2. **Role-Based Access**: Admin-only endpoints kiểm tra role trong middleware `checkRole("admin")`
+3. **Input Validation**: Tất cả request body được validate bằng Zod schemas
+4. **SQL Injection Prevention**: Sử dụng MongoDB Mongoose với parameterized queries
+5. **CORS**: Configured cho phép cross-origin requests từ client domain
+6. **Rate Limiting**: Nên áp dụng rate limiting cho public endpoints
+7. **Data Encryption**: Passwords được hash bằng bcrypt (min 10 rounds)
